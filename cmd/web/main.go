@@ -57,8 +57,17 @@ func main() {
 
 	// Construct metadata service
 	var metadataService web.VideoMetadataService
+	var err error
 	log.Println("Creating metadata service of type", metadataServiceType, "with options", metadataServiceOptions)
-	// TODO: Implement metadata service creation logic
+	switch metadataServiceType {
+	case "db":
+		metadataService, err = web.NewSQLiteVideoMetadataService(metadataServiceOptions) // in this context, database file path
+		if err != nil {
+			log.Panicf("failed to instantiate SQLite VideoMetadataService: %v", err)
+		}
+	default:
+		log.Panicf("metadata service type %v is not implemented yet", contentServiceType)
+	}
 
 	// Construct content service
 	var contentService web.VideoContentService
