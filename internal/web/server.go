@@ -3,10 +3,13 @@
 package web
 
 import (
+	"html/template"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 )
 
 type server struct {
@@ -29,6 +32,12 @@ func NewServer(
 	}
 }
 
+type VideoTemplate struct {
+	VideoId    string
+	EscapedId  string
+	UploadTime time.Time
+}
+
 func (s *server) Start(lis net.Listener) error {
 	s.mux = http.NewServeMux()
 	s.mux.HandleFunc("/upload", s.handleUpload)
@@ -40,7 +49,35 @@ func (s *server) Start(lis net.Listener) error {
 }
 
 func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	panic("Lab 7: not implemented")
+	// Get videos from metadata service
+	videos, err := s.metadataService.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var templateVideosData []VideoTemplate
+	// Escape the URL chracters
+	for _, vidMetadata := range videos {
+		templateVideosData = append(templateVideosData, VideoTemplate{
+			VideoId:    vidMetadata.Id,
+			EscapedId:  url.PathEscape(vidMetadata.Id),
+			UploadTime: vidMetadata.UploadedAt,
+		})
+	}
+
+	tmpl, err := template.New("index_page").Parse(indexHTML)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+
+	if err = tmpl.Execute(w, templateVideosData); err != nil {
+		log.Panicf("failed to render template %v: %v", tmpl.Name(), err)
+	}
 }
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {

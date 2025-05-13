@@ -60,7 +60,7 @@ func main() {
 	var err error
 	log.Println("Creating metadata service of type", metadataServiceType, "with options", metadataServiceOptions)
 	switch metadataServiceType {
-	case "db":
+	case "sqlite":
 		metadataService, err = web.NewSQLiteVideoMetadataService(metadataServiceOptions) // in this context, database file path
 		if err != nil {
 			log.Panicf("failed to instantiate SQLite VideoMetadataService: %v", err)

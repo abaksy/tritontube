@@ -66,6 +66,7 @@ func (vms *SQLiteVideoMetadataService) List() ([]VideoMetadata, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		videos = append(videos, VideoMetadata{Id: videoId, UploadedAt: uploadedAt})
 	}
 	err = rows.Err()
