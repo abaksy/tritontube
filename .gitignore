@@ -24,6 +24,11 @@ go.work.sum
 # env file
 .env
 
+# video files
 *.mp4
 *.mpd
 *.m4s
+
+# SQL database files
+*.db 
+*.sql

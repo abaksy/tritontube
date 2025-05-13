@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"tritontube/internal/web"
 )
@@ -56,13 +57,18 @@ func main() {
 
 	// Construct metadata service
 	var metadataService web.VideoMetadataService
-	fmt.Println("Creating metadata service of type", metadataServiceType, "with options", metadataServiceOptions)
+	log.Println("Creating metadata service of type", metadataServiceType, "with options", metadataServiceOptions)
 	// TODO: Implement metadata service creation logic
 
 	// Construct content service
 	var contentService web.VideoContentService
-	fmt.Println("Creating content service of type", contentServiceType, "with options", contentServiceOptions)
-	// TODO: Implement content service creation logic
+	log.Println("Creating content service of type", contentServiceType, "with options", contentServiceOptions)
+	switch contentServiceType {
+	case "fs":
+		contentService = web.NewFSVideoContentService(contentServiceOptions) // in this context, the base video dir.
+	default:
+		log.Panicf("content service type %v is not implemented yet", contentServiceType)
+	}
 
 	// Start the server
 	server := web.NewServer(metadataService, contentService)
