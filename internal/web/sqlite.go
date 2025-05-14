@@ -41,6 +41,7 @@ func (vms *SQLiteVideoMetadataService) Read(videoId string) (*VideoMetadata, err
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("query %v for videoID %v returned empty result", SQLQuery, videoId)
+			return nil, err
 		}
 		return nil, fmt.Errorf("failed to extract fields from row: %v", err)
 	}
