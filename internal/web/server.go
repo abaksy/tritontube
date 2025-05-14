@@ -175,7 +175,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	// Run FFmpeg to convert MP4 to MPEG-DASH
 	cmd := exec.Command("ffmpeg",
 		"-i", mp4Path, // input file
-		"-threads", "12", // num threads
 		"-c:v", "libx264", // video codec
 		"-c:a", "aac", // audio codec
 		"-bf", "1", // max 1 b-frame
