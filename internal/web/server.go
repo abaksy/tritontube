@@ -147,9 +147,9 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to create temp directory", http.StatusInternalServerError)
 		return
 	}
-	// defer os.RemoveAll(tempDir) // Clean up temp directory when done
+	defer os.RemoveAll(tempDir) // Clean up temp directory when done
 
-	log.Printf("creating temp file")
+	log.Printf("creating temp file to store MP4 content")
 	// Create a temporary file for the uploaded MP4
 	mp4Path := filepath.Join(tempDir, header.Filename)
 	tempFile, err := os.Create(mp4Path)
@@ -206,7 +206,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("finished ffmpeg command")
 
-	log.Printf("store all generated files")
+	log.Printf("storing all generated files")
 
 	// Store all generated files to the content service
 	files, err := os.ReadDir(tempDir)
@@ -215,15 +215,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("store metadata")
-
-	// Create metadata entry for the new video
-	if err := s.metadataService.Create(videoId, time.Now()); err != nil {
-		http.Error(w, fmt.Sprintf("failed to create video metadata: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("store mpeg-dash files")
+	log.Printf("storing mpeg-dash files")
 
 	// Upload each generated file to the content service
 	for _, file := range files {
@@ -247,7 +239,15 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("rendering templates")
+	log.Printf("storing metadata")
+
+	// Create metadata entry for the new video
+	if err := s.metadataService.Create(videoId, time.Now()); err != nil {
+		http.Error(w, fmt.Sprintf("failed to create video metadata: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("finished processing, redirecting to index...")
 
 	// Redirect to the home page with status 303 See Other
 	http.Redirect(w, r, "/", http.StatusSeeOther)

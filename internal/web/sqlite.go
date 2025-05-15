@@ -21,6 +21,17 @@ type SQLiteVideoMetadataService struct {
 func NewSQLiteVideoMetadataService(dbFile string) (*SQLiteVideoMetadataService, error) {
 	dbConn, err := sql.Open(SQLDriver, dbFile)
 	if err != nil {
+		log.Printf("error opening SQL connection: %v", err)
+		return nil, err
+	}
+
+	sqlStmt := `
+	CREATE TABLE videos (video_id TEXT NOT NULL PRIMARY KEY, uploaded_at TIMESTAMP NOT NULL);
+	DELETE FROM videos;
+	`
+	_, err = dbConn.Exec(sqlStmt)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStmt)
 		return nil, err
 	}
 
