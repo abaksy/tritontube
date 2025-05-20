@@ -26,8 +26,7 @@ func NewSQLiteVideoMetadataService(dbFile string) (*SQLiteVideoMetadataService, 
 	}
 
 	sqlStmt := `
-	CREATE TABLE videos (video_id TEXT NOT NULL PRIMARY KEY, uploaded_at TIMESTAMP NOT NULL);
-	DELETE FROM videos;
+	CREATE TABLE IF NOT EXISTS videos (video_id TEXT NOT NULL PRIMARY KEY, uploaded_at TIMESTAMP NOT NULL);
 	`
 	_, err = dbConn.Exec(sqlStmt)
 	if err != nil {
@@ -115,4 +114,10 @@ func (vms *SQLiteVideoMetadataService) Create(videoId string, uploadedAt time.Ti
 		return fmt.Errorf("error while commiting transaction: %v", err)
 	}
 	return nil
+}
+
+func (vms *SQLiteVideoMetadataService) Close() error {
+	log.Printf("closing DB connection...")
+	err := vms.db.Close()
+	return err
 }

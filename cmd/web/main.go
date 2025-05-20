@@ -65,6 +65,7 @@ func main() {
 		if err != nil {
 			log.Panicf("failed to instantiate SQLite VideoMetadataService: %v", err)
 		}
+		defer metadataService.Close()
 	default:
 		log.Panicf("metadata service type %v is not implemented yet", contentServiceType)
 	}
