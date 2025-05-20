@@ -4,7 +4,6 @@ package web
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 )
@@ -44,13 +43,13 @@ func (vcs *FSVideoContentService) Write(videoId string, filename string, data []
 	}
 	defer fp.Close()
 
-	n, err := fp.Write(data)
+	_, err = fp.Write(data)
 	if err != nil {
 		return fmt.Errorf("failed to write to file %v: %v", fullPath, err)
 	}
 	fp.Sync() // flush in-memory data to disk
 
-	log.Printf("wrote %v bytes to %v", n, fullPath)
+	// log.Printf("wrote %v bytes to %v", n, fullPath)
 
 	return nil
 }

@@ -92,7 +92,7 @@ func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	// Check if the request is a POST request
-	log.Printf("starting upload....")
+	log.Printf("inside handleUpload handler")
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -104,8 +104,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("reading from form field")
-
 	// Get the uploaded file
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -113,8 +111,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
-	log.Printf("checking file extension and trim suffix")
 
 	// Check if the file is an MP4
 	if !strings.HasSuffix(strings.ToLower(header.Filename), ".mp4") {
@@ -135,14 +131,12 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if existingVideo != nil {
-		http.Error(w, "a video with this ID already exists", http.StatusConflict)
+		http.Error(w, fmt.Sprintf("a video with ID %v already exists", existingVideo.Id), http.StatusConflict)
 		return
 	}
 
-	log.Printf("creating temp dir")
-
 	// Create a temporary directory
-	tempDir, err := os.MkdirTemp("", "tritontube-upload-*")
+	tempDir, err := os.MkdirTemp("", "tritontube-uploads-*")
 	if err != nil {
 		http.Error(w, "failed to create temp directory", http.StatusInternalServerError)
 		return
@@ -158,8 +152,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("running io.Copy to copy to temp file")
-
 	// Copy the uploaded file to the temporary file
 	if _, err := io.Copy(tempFile, file); err != nil {
 		tempFile.Close()
@@ -168,7 +160,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	tempFile.Close()
 
-	log.Printf("starting ffmpeg command")
+	log.Printf("starting video processing using ffmpeg")
 	// Set up the path for the manifest file
 	manifestPath := filepath.Join(tempDir, "manifest.mpd")
 
@@ -204,9 +196,7 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("finished ffmpeg command")
-
-	log.Printf("storing all generated files")
+	log.Printf("finished video processing")
 
 	// Store all generated files to the content service
 	files, err := os.ReadDir(tempDir)
@@ -214,8 +204,6 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to read converted files", http.StatusInternalServerError)
 		return
 	}
-
-	log.Printf("storing mpeg-dash files")
 
 	// Upload each generated file to the content service
 	for _, file := range files {
@@ -239,15 +227,11 @@ func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("storing metadata")
-
 	// Create metadata entry for the new video
 	if err := s.metadataService.Create(videoId, time.Now()); err != nil {
 		http.Error(w, fmt.Sprintf("failed to create video metadata: %v", err), http.StatusInternalServerError)
 		return
 	}
-
-	log.Printf("finished processing, redirecting to index...")
 
 	// Redirect to the home page with status 303 See Other
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -284,23 +268,6 @@ func (s *server) handleVideo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getContentType(filename string) string {
-	switch {
-	case strings.HasSuffix(filename, ".mpd"):
-		return "application/dash+xml"
-	case strings.HasSuffix(filename, ".m4s"):
-		if strings.Contains(filename, "audio") {
-			return "audio/mp4"
-		}
-		return "video/mp4"
-	case strings.HasSuffix(filename, ".mp4"):
-		return "video/mp4"
-	default:
-		// Default to octet-stream for unknown types
-		return "application/octet-stream"
-	}
-}
-
 func (s *server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	// parse /content/<videoId>/<filename>
 	videoId := r.URL.Path[len("/content/"):]
@@ -328,5 +295,24 @@ func (s *server) handleVideoContent(w http.ResponseWriter, r *http.Request) {
 	// Write the file content to the response
 	if _, err := w.Write(bytes); err != nil {
 		http.Error(w, fmt.Sprintf("failed to write bytes to network: %v", err), http.StatusInternalServerError)
+	}
+}
+
+// NOTE: this is a private method that
+// does not belong to the "server" type
+func getContentType(filename string) string {
+	switch {
+	case strings.HasSuffix(filename, ".mpd"):
+		return "application/dash+xml"
+	case strings.HasSuffix(filename, ".m4s"):
+		if strings.Contains(filename, "audio") {
+			return "audio/mp4"
+		}
+		return "video/mp4"
+	case strings.HasSuffix(filename, ".mp4"):
+		return "video/mp4"
+	default:
+		// Default to octet-stream for unknown types
+		return "application/octet-stream"
 	}
 }
