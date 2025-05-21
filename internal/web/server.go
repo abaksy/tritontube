@@ -251,6 +251,10 @@ func (s *server) handleVideo(w http.ResponseWriter, r *http.Request) {
 
 	vidData, err := s.metadataService.Read(videoId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, fmt.Sprintf("video Id: %v does not exist!", videoId), http.StatusNotFound)
+			return
+		}
 		http.Error(w, fmt.Sprintf("failed to get video %v metadata: %v", videoId, err), http.StatusInternalServerError)
 		return
 	}
