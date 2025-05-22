@@ -4,6 +4,7 @@ package web
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 )
@@ -55,6 +56,13 @@ func (vcs *FSVideoContentService) Write(videoId string, filename string, data []
 }
 
 func NewFSVideoContentService(baseDir string) *FSVideoContentService {
+	log.Printf("creating directory %v", baseDir)
+	err := os.MkdirAll(baseDir, 0755)
+	if err != nil {
+		log.Printf("error in directory creation: %v", err)
+		return nil
+	}
+
 	return &FSVideoContentService{
 		baseDir: baseDir,
 	}
