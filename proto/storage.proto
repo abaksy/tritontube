@@ -11,6 +11,9 @@ service StorageService {
     // Get a file from the storage server 
     rpc GetFile(GetFileRequest) returns (GetFileResponse);
 
+    // Delete file
+    rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+
     // List files for a given Video ID
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
 
@@ -38,6 +41,16 @@ message GetFileResponse {
     bool success = 1;
     bytes content = 2;
     string error = 3;
+}
+
+message DeleteFileRequest {
+    string video_id = 1;
+    string filename = 2;
+}
+
+message DeleteFileResponse {
+    bool success = 1;
+    string error = 2;
 }
 
 message ListFilesRequest {

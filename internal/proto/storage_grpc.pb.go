@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	StorageService_AddFile_FullMethodName      = "/tritontube.StorageService/AddFile"
 	StorageService_GetFile_FullMethodName      = "/tritontube.StorageService/GetFile"
+	StorageService_DeleteFile_FullMethodName   = "/tritontube.StorageService/DeleteFile"
 	StorageService_ListFiles_FullMethodName    = "/tritontube.StorageService/ListFiles"
 	StorageService_ListAllFiles_FullMethodName = "/tritontube.StorageService/ListAllFiles"
 )
@@ -33,6 +34,8 @@ type StorageServiceClient interface {
 	AddFile(ctx context.Context, in *AddFileRequest, opts ...grpc.CallOption) (*AddFileResponse, error)
 	// Get a file from the storage server
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*GetFileResponse, error)
+	// Delete file
+	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
 	// List files for a given Video ID
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
 	// List all the files on a particular server (for migration)
@@ -67,6 +70,16 @@ func (c *storageServiceClient) GetFile(ctx context.Context, in *GetFileRequest, 
 	return out, nil
 }
 
+func (c *storageServiceClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteFileResponse)
+	err := c.cc.Invoke(ctx, StorageService_DeleteFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *storageServiceClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListFilesResponse)
@@ -95,6 +108,8 @@ type StorageServiceServer interface {
 	AddFile(context.Context, *AddFileRequest) (*AddFileResponse, error)
 	// Get a file from the storage server
 	GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error)
+	// Delete file
+	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
 	// List files for a given Video ID
 	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
 	// List all the files on a particular server (for migration)
@@ -114,6 +129,9 @@ func (UnimplementedStorageServiceServer) AddFile(context.Context, *AddFileReques
 }
 func (UnimplementedStorageServiceServer) GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+}
+func (UnimplementedStorageServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
 }
 func (UnimplementedStorageServiceServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
@@ -178,6 +196,24 @@ func _StorageService_GetFile_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StorageService_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServiceServer).DeleteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StorageService_DeleteFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServiceServer).DeleteFile(ctx, req.(*DeleteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _StorageService_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListFilesRequest)
 	if err := dec(in); err != nil {
@@ -228,6 +264,10 @@ var StorageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFile",
 			Handler:    _StorageService_GetFile_Handler,
+		},
+		{
+			MethodName: "DeleteFile",
+			Handler:    _StorageService_DeleteFile_Handler,
 		},
 		{
 			MethodName: "ListFiles",

@@ -245,6 +245,110 @@ func (x *GetFileResponse) GetError() string {
 	return ""
 }
 
+type DeleteFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VideoId       string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileRequest) Reset() {
+	*x = DeleteFileRequest{}
+	mi := &file_proto_storage_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileRequest) ProtoMessage() {}
+
+func (x *DeleteFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_storage_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileRequest.ProtoReflect.Descriptor instead.
+func (*DeleteFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_storage_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeleteFileRequest) GetVideoId() string {
+	if x != nil {
+		return x.VideoId
+	}
+	return ""
+}
+
+func (x *DeleteFileRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+type DeleteFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFileResponse) Reset() {
+	*x = DeleteFileResponse{}
+	mi := &file_proto_storage_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFileResponse) ProtoMessage() {}
+
+func (x *DeleteFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_storage_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFileResponse.ProtoReflect.Descriptor instead.
+func (*DeleteFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_storage_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *DeleteFileResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 type ListFilesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VideoId       string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
@@ -254,7 +358,7 @@ type ListFilesRequest struct {
 
 func (x *ListFilesRequest) Reset() {
 	*x = ListFilesRequest{}
-	mi := &file_proto_storage_proto_msgTypes[4]
+	mi := &file_proto_storage_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +370,7 @@ func (x *ListFilesRequest) String() string {
 func (*ListFilesRequest) ProtoMessage() {}
 
 func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_storage_proto_msgTypes[4]
+	mi := &file_proto_storage_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +383,7 @@ func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListFilesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_storage_proto_rawDescGZIP(), []int{4}
+	return file_proto_storage_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListFilesRequest) GetVideoId() string {
@@ -300,7 +404,7 @@ type ListFilesResponse struct {
 
 func (x *ListFilesResponse) Reset() {
 	*x = ListFilesResponse{}
-	mi := &file_proto_storage_proto_msgTypes[5]
+	mi := &file_proto_storage_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -312,7 +416,7 @@ func (x *ListFilesResponse) String() string {
 func (*ListFilesResponse) ProtoMessage() {}
 
 func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_storage_proto_msgTypes[5]
+	mi := &file_proto_storage_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -325,7 +429,7 @@ func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFilesResponse.ProtoReflect.Descriptor instead.
 func (*ListFilesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_storage_proto_rawDescGZIP(), []int{5}
+	return file_proto_storage_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListFilesResponse) GetFiles() []string {
@@ -357,7 +461,7 @@ type ListAllFilesRequest struct {
 
 func (x *ListAllFilesRequest) Reset() {
 	*x = ListAllFilesRequest{}
-	mi := &file_proto_storage_proto_msgTypes[6]
+	mi := &file_proto_storage_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -369,7 +473,7 @@ func (x *ListAllFilesRequest) String() string {
 func (*ListAllFilesRequest) ProtoMessage() {}
 
 func (x *ListAllFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_storage_proto_msgTypes[6]
+	mi := &file_proto_storage_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -382,7 +486,7 @@ func (x *ListAllFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListAllFilesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_storage_proto_rawDescGZIP(), []int{6}
+	return file_proto_storage_proto_rawDescGZIP(), []int{8}
 }
 
 type FileInfo struct {
@@ -396,7 +500,7 @@ type FileInfo struct {
 
 func (x *FileInfo) Reset() {
 	*x = FileInfo{}
-	mi := &file_proto_storage_proto_msgTypes[7]
+	mi := &file_proto_storage_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +512,7 @@ func (x *FileInfo) String() string {
 func (*FileInfo) ProtoMessage() {}
 
 func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_storage_proto_msgTypes[7]
+	mi := &file_proto_storage_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +525,7 @@ func (x *FileInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileInfo.ProtoReflect.Descriptor instead.
 func (*FileInfo) Descriptor() ([]byte, []int) {
-	return file_proto_storage_proto_rawDescGZIP(), []int{7}
+	return file_proto_storage_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FileInfo) GetVideoId() string {
@@ -456,7 +560,7 @@ type ListAllFilesResponse struct {
 
 func (x *ListAllFilesResponse) Reset() {
 	*x = ListAllFilesResponse{}
-	mi := &file_proto_storage_proto_msgTypes[8]
+	mi := &file_proto_storage_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -468,7 +572,7 @@ func (x *ListAllFilesResponse) String() string {
 func (*ListAllFilesResponse) ProtoMessage() {}
 
 func (x *ListAllFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_storage_proto_msgTypes[8]
+	mi := &file_proto_storage_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,7 +585,7 @@ func (x *ListAllFilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllFilesResponse.ProtoReflect.Descriptor instead.
 func (*ListAllFilesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_storage_proto_rawDescGZIP(), []int{8}
+	return file_proto_storage_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListAllFilesResponse) GetFiles() []*FileInfo {
@@ -524,7 +628,13 @@ const file_proto_storage_proto_rawDesc = "" +
 	"\x0fGetFileResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\fR\acontent\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"-\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"J\n" +
+	"\x11DeleteFileRequest\x12\x19\n" +
+	"\bvideo_id\x18\x01 \x01(\tR\avideoId\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"D\n" +
+	"\x12DeleteFileResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\"-\n" +
 	"\x10ListFilesRequest\x12\x19\n" +
 	"\bvideo_id\x18\x01 \x01(\tR\avideoId\"Y\n" +
 	"\x11ListFilesResponse\x12\x14\n" +
@@ -539,10 +649,12 @@ const file_proto_storage_proto_rawDesc = "" +
 	"\x14ListAllFilesResponse\x12*\n" +
 	"\x05files\x18\x01 \x03(\v2\x14.tritontube.FileInfoR\x05files\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error2\xb5\x02\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error2\x82\x03\n" +
 	"\x0eStorageService\x12B\n" +
 	"\aAddFile\x12\x1a.tritontube.AddFileRequest\x1a\x1b.tritontube.AddFileResponse\x12B\n" +
-	"\aGetFile\x12\x1a.tritontube.GetFileRequest\x1a\x1b.tritontube.GetFileResponse\x12H\n" +
+	"\aGetFile\x12\x1a.tritontube.GetFileRequest\x1a\x1b.tritontube.GetFileResponse\x12K\n" +
+	"\n" +
+	"DeleteFile\x12\x1d.tritontube.DeleteFileRequest\x1a\x1e.tritontube.DeleteFileResponse\x12H\n" +
 	"\tListFiles\x12\x1c.tritontube.ListFilesRequest\x1a\x1d.tritontube.ListFilesResponse\x12Q\n" +
 	"\fListAllFiles\x12\x1f.tritontube.ListAllFilesRequest\x1a .tritontube.ListAllFilesResponseB\x16Z\x14internal/proto;protob\x06proto3"
 
@@ -558,33 +670,37 @@ func file_proto_storage_proto_rawDescGZIP() []byte {
 	return file_proto_storage_proto_rawDescData
 }
 
-var file_proto_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proto_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_storage_proto_goTypes = []any{
 	(*AddFileRequest)(nil),       // 0: tritontube.AddFileRequest
 	(*AddFileResponse)(nil),      // 1: tritontube.AddFileResponse
 	(*GetFileRequest)(nil),       // 2: tritontube.GetFileRequest
 	(*GetFileResponse)(nil),      // 3: tritontube.GetFileResponse
-	(*ListFilesRequest)(nil),     // 4: tritontube.ListFilesRequest
-	(*ListFilesResponse)(nil),    // 5: tritontube.ListFilesResponse
-	(*ListAllFilesRequest)(nil),  // 6: tritontube.ListAllFilesRequest
-	(*FileInfo)(nil),             // 7: tritontube.FileInfo
-	(*ListAllFilesResponse)(nil), // 8: tritontube.ListAllFilesResponse
+	(*DeleteFileRequest)(nil),    // 4: tritontube.DeleteFileRequest
+	(*DeleteFileResponse)(nil),   // 5: tritontube.DeleteFileResponse
+	(*ListFilesRequest)(nil),     // 6: tritontube.ListFilesRequest
+	(*ListFilesResponse)(nil),    // 7: tritontube.ListFilesResponse
+	(*ListAllFilesRequest)(nil),  // 8: tritontube.ListAllFilesRequest
+	(*FileInfo)(nil),             // 9: tritontube.FileInfo
+	(*ListAllFilesResponse)(nil), // 10: tritontube.ListAllFilesResponse
 }
 var file_proto_storage_proto_depIdxs = []int32{
-	7, // 0: tritontube.ListAllFilesResponse.files:type_name -> tritontube.FileInfo
-	0, // 1: tritontube.StorageService.AddFile:input_type -> tritontube.AddFileRequest
-	2, // 2: tritontube.StorageService.GetFile:input_type -> tritontube.GetFileRequest
-	4, // 3: tritontube.StorageService.ListFiles:input_type -> tritontube.ListFilesRequest
-	6, // 4: tritontube.StorageService.ListAllFiles:input_type -> tritontube.ListAllFilesRequest
-	1, // 5: tritontube.StorageService.AddFile:output_type -> tritontube.AddFileResponse
-	3, // 6: tritontube.StorageService.GetFile:output_type -> tritontube.GetFileResponse
-	5, // 7: tritontube.StorageService.ListFiles:output_type -> tritontube.ListFilesResponse
-	8, // 8: tritontube.StorageService.ListAllFiles:output_type -> tritontube.ListAllFilesResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	9,  // 0: tritontube.ListAllFilesResponse.files:type_name -> tritontube.FileInfo
+	0,  // 1: tritontube.StorageService.AddFile:input_type -> tritontube.AddFileRequest
+	2,  // 2: tritontube.StorageService.GetFile:input_type -> tritontube.GetFileRequest
+	4,  // 3: tritontube.StorageService.DeleteFile:input_type -> tritontube.DeleteFileRequest
+	6,  // 4: tritontube.StorageService.ListFiles:input_type -> tritontube.ListFilesRequest
+	8,  // 5: tritontube.StorageService.ListAllFiles:input_type -> tritontube.ListAllFilesRequest
+	1,  // 6: tritontube.StorageService.AddFile:output_type -> tritontube.AddFileResponse
+	3,  // 7: tritontube.StorageService.GetFile:output_type -> tritontube.GetFileResponse
+	5,  // 8: tritontube.StorageService.DeleteFile:output_type -> tritontube.DeleteFileResponse
+	7,  // 9: tritontube.StorageService.ListFiles:output_type -> tritontube.ListFilesResponse
+	10, // 10: tritontube.StorageService.ListAllFiles:output_type -> tritontube.ListAllFilesResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_storage_proto_init() }
@@ -598,7 +714,7 @@ func file_proto_storage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_storage_proto_rawDesc), len(file_proto_storage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
