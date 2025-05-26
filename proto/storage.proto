@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package tritontube;
+
+option go_package = "internal/proto;proto";
+
+service StorageService {
+    // Store a file on the storage server
+    rpc AddFile(AddFileRequest) returns (AddFileResponse);
+
+    // Get a file from the storage server 
+    rpc GetFile(GetFileRequest) returns (GetFileResponse);
+
+    // List files for a given Video ID
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+
+    // List all the files on a particular server (for migration)
+    rpc ListAllFiles(ListAllFilesRequest) returns (ListAllFilesResponse);
+}
+
+message AddFileRequest {
+    string video_id = 1;
+    string filename = 2;
+    bytes content = 3;
+}
+
+message AddFileResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message GetFileRequest {
+    string video_id = 1;
+    string filename = 2;
+}
+
+message GetFileResponse {
+    bool success = 1;
+    bytes content = 2;
+    string error = 3;
+}
+
+message ListFilesRequest {
+    string video_id = 1;
+}
+
+message ListFilesResponse {
+    repeated string files = 1;
+    bool success = 2;
+    string error = 3;
+}
+
+message ListAllFilesRequest {
+    // empty, list all files without any filter
+}
+
+message FileInfo {
+  string video_id = 1;    // Video identifier
+  string filename = 2;    // File name
+  int64 size = 3;         // File size in bytes
+}
+
+
+message ListAllFilesResponse {
+    repeated FileInfo files = 1;
+    bool success = 2;
+    string error = 3;
+}
