@@ -34,6 +34,8 @@ func main() {
 	fmt.Printf("Port: %d\n", *port)
 	fmt.Printf("Base Directory: %s\n", baseDir)
 
+	log.SetPrefix(fmt.Sprintf("(%v:%v) ", *host, *port))
+
 	// Create storage directory
 	err := os.MkdirAll(baseDir, 0755)
 	if err != nil {
@@ -42,7 +44,7 @@ func main() {
 
 	storageService, err := storage.NewStorageServer(baseDir)
 	if err != nil {
-		log.Panicf("error creating storageservice: %v", err)
+		log.Panicf("error creating storage service: %v", err)
 	}
 
 	// Set up gRPC server

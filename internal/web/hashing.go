@@ -47,7 +47,7 @@ func NewConsistentHashRing(servers []string) (*ConsistentHashRing, error) {
 	return chRing, nil
 }
 
-func (ring *ConsistentHashRing) GetNodes() []string {
+func (ring *ConsistentHashRing) GetNodesInRing() []string {
 	ring.Mu.RLock()
 	defer ring.Mu.RUnlock()
 
@@ -99,7 +99,7 @@ func (ring *ConsistentHashRing) GetNodeFromKey(key string) string {
 	return ring.Nodes[idx].Address
 }
 
-func (ring *ConsistentHashRing) AddNode(node string) {
+func (ring *ConsistentHashRing) AddNodeToRing(node string) {
 	newNode := StorageNode{
 		Address:  node,
 		NodeHash: hashStringToUint64(node),
@@ -111,7 +111,7 @@ func (ring *ConsistentHashRing) AddNode(node string) {
 	ring.SortRing()
 }
 
-func (ring *ConsistentHashRing) DeleteNode(node string) bool {
+func (ring *ConsistentHashRing) DeleteNodeFromRing(node string) bool {
 
 	found := false // indicate if the node to delete was found
 	idx := -1      // index of node to delete
@@ -131,4 +131,85 @@ func (ring *ConsistentHashRing) DeleteNode(node string) bool {
 		ring.Nodes = slices.Delete(ring.Nodes, idx, idx+1)
 	}
 	return found
+}
+
+// Returns the node that would be responsible for the key
+// in the old ring configuration (used for migration)
+func (r *ConsistentHashRing) GetNodeForKeyWithNodes(key string, nodes []string) string {
+	if len(nodes) == 0 {
+		return ""
+	}
+
+	if len(nodes) == 1 {
+		return nodes[0]
+	}
+
+	// Create temporary ring with old nodes
+	tempRing, _ := NewConsistentHashRing(nodes)
+	return tempRing.GetNodeFromKey(key)
+}
+
+// GetFilesToMigrate returns files that should move when a node is added
+// This helps determine which files need to be migrated to the new node
+func (ring *ConsistentHashRing) GetFilesToMigrateOnAdd(newNode string, allFiles []string) []string {
+	ring.Mu.RLock()
+	oldNodes := make([]string, len(ring.Nodes))
+	for _, storageNode := range ring.Nodes {
+		oldNodes = append(oldNodes, storageNode.Address)
+	}
+	ring.Mu.RUnlock()
+
+	// Create new ring with the added node
+	newNodes := append(oldNodes, newNode)
+	newRing, _ := NewConsistentHashRing(newNodes)
+
+	var filesToMigrate []string
+	for _, file := range allFiles {
+		oldResponsibleNode := ring.GetNodeForKeyWithNodes(file, oldNodes)
+		newResponsibleNode := newRing.GetNodeFromKey(file)
+
+		// If the responsible node changed and it's now the new node, migrate it
+		if newResponsibleNode == newNode && oldResponsibleNode != newNode {
+			filesToMigrate = append(filesToMigrate, file)
+		}
+	}
+
+	return filesToMigrate
+}
+
+// GetFilesToMigrateOnRemove returns files that need to be moved when a node is removed
+func (ring *ConsistentHashRing) GetFilesToMigrateOnRemove(nodeToRemove string, allFiles []string) map[string]string {
+	ring.Mu.RLock()
+	currentNodes := make([]string, len(ring.Nodes))
+	for _, storageNode := range ring.Nodes {
+		currentNodes = append(currentNodes, storageNode.Address)
+	}
+	ring.Mu.RUnlock()
+
+	// Create new ring without the removed node
+	var newNodes []string
+	for _, node := range currentNodes {
+		if node != nodeToRemove {
+			newNodes = append(newNodes, node)
+		}
+	}
+
+	if len(newNodes) == 0 {
+		return make(map[string]string) // No nodes left
+	}
+
+	newRing, _ := NewConsistentHashRing(newNodes)
+
+	// Map from file to new responsible node
+	fileMigrations := make(map[string]string)
+	for _, file := range allFiles {
+		currentResponsibleNode := ring.GetNodeFromKey(file)
+		// If the file is currently on the node being removed, find its new home
+		if currentResponsibleNode == nodeToRemove {
+			newResponsibleNode := newRing.GetNodeFromKey(file)
+			fileMigrations[file] = newResponsibleNode
+		}
+	}
+
+	return fileMigrations
 }
