@@ -76,6 +76,11 @@ func main() {
 	switch contentServiceType {
 	case "fs":
 		contentService = web.NewFSVideoContentService(contentServiceOptions) // in this context, the base video dir.
+	case "nw":
+		contentService, err = web.NewNetworkVideoContentService(contentServiceOptions)
+		if err != nil {
+			log.Panicf("error instantiating networked video content service: %v", err)
+		}
 	default:
 		log.Panicf("content service type %v is not implemented yet", contentServiceType)
 	}
