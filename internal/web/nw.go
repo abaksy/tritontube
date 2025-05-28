@@ -55,7 +55,7 @@ func NewNetworkVideoContentService(nodes string) (*NetworkVideoContentService, e
 	}
 
 	// Create gRPC clients and connections for all storage servers
-	for _, node := range grpcNodes {
+	for _, node := range storageNodeAddrs {
 		if err := service.createClientForNode(node); err != nil {
 			log.Printf("Warning: Failed to create client for node %s: %v", node, err)
 			// Continue with other nodes, but log the failure
@@ -123,6 +123,8 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 
 	newNodeAddr := req.NodeAddress
 
+	log.Printf("NEW NODE ADDRESS: %v", newNodeAddr)
+
 	// Check if node already exists
 	currentNodes := nw.Ring.GetNodesInRing()
 	for _, node := range currentNodes {
@@ -133,11 +135,15 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 		}
 	}
 
+	log.Printf("creating client for node %v", newNodeAddr)
+
 	// Create grpc client for node
 	err := nw.createClientForNode(newNodeAddr)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("initiating migration process")
 
 	// Get current file inventory from all existing nodes
 	allFiles, err := nw.getAllFiles()
@@ -147,6 +153,8 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 			MigratedFileCount: 0,
 		}, fmt.Errorf("failed to get file inventory: %v", err)
 	}
+
+	log.Printf("all files: %v", allFiles)
 
 	// Build list of all file keys for migration analysis
 	var allFileKeys []string
@@ -163,6 +171,8 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 
 	// Determine which files should migrate to the new node
 	filesToMigrate := nw.Ring.GetFilesToMigrateOnAdd(newNodeAddr, allFileKeys)
+
+	log.Printf("files to migrate on add: %v", filesToMigrate)
 
 	// Add the node to the ring (this changes the consistent hashing)
 	nw.Ring.AddNodeToRing(newNodeAddr)
@@ -214,6 +224,9 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 	// defer nw.Mu.Unlock()
 
 	nodeToRemove := req.NodeAddress
+
+	log.Printf("node to remove: %v", nodeToRemove)
+
 	currNodes := nw.Ring.GetNodesInRing()
 	nodeExists := false
 	for _, storageNode := range currNodes {
@@ -257,6 +270,8 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 
 	// Determine which files should migrate to the new node
 	filesToMigrate := nw.Ring.GetFilesToMigrateOnRemove(nodeToRemove, allFileKeys)
+
+	log.Printf("files to migrate on remove: %v", filesToMigrate)
 
 	// Perform the actual file migrations
 	migratedCount := 0

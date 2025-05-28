@@ -4,7 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"slices"
+	"fmt"
+	"log"
 	"sort"
 	"sync"
 )
@@ -44,6 +45,8 @@ func NewConsistentHashRing(servers []string) (*ConsistentHashRing, error) {
 
 	}
 
+	chRing.SortRing()
+
 	return chRing, nil
 }
 
@@ -79,6 +82,7 @@ func (ring *ConsistentHashRing) SortRing() {
 // Get the node that should store a given key
 func (ring *ConsistentHashRing) GetNodeFromKey(key string) string {
 	if len(ring.Nodes) == 0 {
+		log.Printf("len(ring.Nodes) is 0, ring.Nodes is %v", ring.Nodes)
 		return ""
 	}
 
@@ -105,8 +109,8 @@ func (ring *ConsistentHashRing) AddNodeToRing(node string) {
 		NodeHash: hashStringToUint64(node),
 	}
 
-	ring.Mu.Lock()
-	defer ring.Mu.Unlock()
+	// ring.Mu.Lock()
+	// defer ring.Mu.Unlock()
 	ring.Nodes = append(ring.Nodes, newNode)
 	ring.SortRing()
 }
@@ -116,8 +120,8 @@ func (ring *ConsistentHashRing) DeleteNodeFromRing(node string) bool {
 	found := false // indicate if the node to delete was found
 	idx := -1      // index of node to delete
 
-	ring.Mu.Lock()
-	defer ring.Mu.Unlock()
+	// ring.Mu.Lock()
+	// defer ring.Mu.Unlock()
 
 	for i, storageNode := range ring.Nodes {
 		if node == storageNode.Address {
@@ -128,7 +132,11 @@ func (ring *ConsistentHashRing) DeleteNodeFromRing(node string) bool {
 	}
 	// remove element at index `idx`
 	if idx != -1 {
-		ring.Nodes = slices.Delete(ring.Nodes, idx, idx+1)
+		ring.Nodes = append(ring.Nodes[:idx], ring.Nodes[idx+1:]...)
+	}
+
+	for _, node := range ring.Nodes {
+		fmt.Printf("NODE ADDRESS: \"%v\"", node.Address)
 	}
 	return found
 }
@@ -187,7 +195,7 @@ func (ring *ConsistentHashRing) GetFilesToMigrateOnRemove(nodeToRemove string, a
 	ring.Mu.RUnlock()
 
 	// Create new ring without the removed node
-	var newNodes []string
+	newNodes := make([]string, len(currentNodes)-1)
 	for _, node := range currentNodes {
 		if node != nodeToRemove {
 			newNodes = append(newNodes, node)
@@ -199,6 +207,9 @@ func (ring *ConsistentHashRing) GetFilesToMigrateOnRemove(nodeToRemove string, a
 	}
 
 	newRing, _ := NewConsistentHashRing(newNodes)
+
+	log.Printf("length of new ring is: %v", len(newRing.Nodes))
+	log.Printf("new ring: %v", newNodes)
 
 	// Map from file to new responsible node
 	fileMigrations := make(map[string]string)
