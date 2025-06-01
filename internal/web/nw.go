@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"strings"
-	"sync"
 	"time"
 	pb "tritontube/internal/proto"
 
@@ -25,7 +24,6 @@ type NetworkVideoContentService struct {
 	Conns       map[string]*grpc.ClientConn        // Client connection pool
 	AdminServer *grpc.Server                       // for admin operations
 	AdminAddr   string                             // Address of admin server
-	Mu          sync.RWMutex
 }
 
 // Uncomment the following line to ensure NetworkVideoContentService implements VideoContentService
@@ -79,17 +77,13 @@ func (nw *NetworkVideoContentService) createClientForNode(node string) error {
 
 	client := pb.NewStorageServiceClient(conn)
 
-	nw.Mu.Lock()
 	nw.Conns[node] = conn
 	nw.Clients[node] = client
-	nw.Mu.Unlock()
 	return nil
 }
 
 func (nw *NetworkVideoContentService) getClientForNode(node string) (pb.StorageServiceClient, error) {
-	nw.Mu.RLock()
 	client, exists := nw.Clients[node]
-	nw.Mu.RUnlock()
 
 	if !exists {
 		return nil, fmt.Errorf("no client available for node %s", node)
@@ -99,8 +93,6 @@ func (nw *NetworkVideoContentService) getClientForNode(node string) (pb.StorageS
 }
 
 func (nw *NetworkVideoContentService) deleteClientForNode(node string) {
-	nw.Mu.Lock()
-	defer nw.Mu.Unlock()
 
 	if conn, exists := nw.Conns[node]; exists {
 		conn.Close()
@@ -118,12 +110,8 @@ func (nw *NetworkVideoContentService) ListNodes(ctx context.Context, req *pb.Lis
 }
 
 func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
-	// nw.Mu.Lock()
-	// defer nw.Mu.Unlock()
 
 	newNodeAddr := req.NodeAddress
-
-	log.Printf("NEW NODE ADDRESS: %v", newNodeAddr)
 
 	// Check if node already exists
 	currentNodes := nw.Ring.GetNodesInRing()
@@ -140,42 +128,45 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 	// Create grpc client for node
 	err := nw.createClientForNode(newNodeAddr)
 	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("initiating migration process")
-
-	// Get current file inventory from all existing nodes
-	allFiles, err := nw.getAllFiles()
-	if err != nil {
-		nw.deleteClientForNode(newNodeAddr) // Clean up on failure
 		return &pb.AddNodeResponse{
 			MigratedFileCount: 0,
-		}, fmt.Errorf("failed to get file inventory: %v", err)
+		}, fmt.Errorf("failed to create gRPC client for node %v: %v", newNodeAddr, err)
 	}
-
-	log.Printf("all files: %v", allFiles)
-
-	// Build list of all file keys for migration analysis
-	var allFileKeys []string
-	fileToCurrentNode := make(map[string]string) // maps a file's key i.e. "videoId/filename" to the current node it exists in
-
-	for nodeAddr, files := range allFiles {
-		for _, file := range files {
-			fileKey := fmt.Sprintf("%s/%s", file.VideoId, file.Filename)
-			allFileKeys = append(allFileKeys,
-				fileKey)
-			fileToCurrentNode[fileKey] = nodeAddr
-		}
-	}
-
-	// Determine which files should migrate to the new node
-	filesToMigrate := nw.Ring.GetFilesToMigrateOnAdd(newNodeAddr, allFileKeys)
-
-	log.Printf("files to migrate on add: %v", filesToMigrate)
 
 	// Add the node to the ring (this changes the consistent hashing)
 	nw.Ring.AddNodeToRing(newNodeAddr)
+	// newNodeHash := hashStringToUint64(newNodeAddr)
+
+	log.Printf("initiating migration process")
+
+	// Get the successor of the current node
+	succNode := nw.Ring.GetSuccessorNode(newNodeAddr)
+
+	// get gRPC client for the successor node
+	client, err := nw.getClientForNode(succNode)
+	if err != nil {
+		return &pb.AddNodeResponse{
+			MigratedFileCount: 0,
+		}, fmt.Errorf("failed to get gRPC client for node %v: %v", succNode, err)
+	}
+
+	// Get all files on successor node
+	files, err := client.ListAllFiles(ctx, &pb.ListAllFilesRequest{})
+	if err != nil {
+		return &pb.AddNodeResponse{
+			MigratedFileCount: 0,
+		}, fmt.Errorf("failed to list files on %v: %v", succNode, err)
+	}
+
+	// Select files to send to new node
+	filesToMigrate := make([]string, 0)
+
+	for _, f := range files.Files {
+		fileKey := fmt.Sprintf("%s/%s", f.VideoId, f.Filename)
+		if nw.Ring.GetNodeFromKey(fileKey) == newNodeAddr {
+			filesToMigrate = append(filesToMigrate, fileKey)
+		}
+	}
 
 	// Perform the actual file migrations
 	migratedCount := 0
@@ -191,10 +182,9 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 
 		videoId := parts[0]
 		filename := parts[1]
-		sourceNode := fileToCurrentNode[fileKey]
 
 		// Migrate the file
-		if err := nw.moveFile(sourceNode, newNodeAddr, videoId, filename); err != nil {
+		if err := nw.moveFile(succNode, newNodeAddr, videoId, filename); err != nil {
 			migrationErrors = append(migrationErrors, fmt.Sprintf("failed to migrate %s: %v", fileKey, err))
 			continue
 		}
@@ -247,29 +237,31 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 		}, errors.New("there are too few nodes in the ring, cannot remove")
 	}
 
-	// Get current file inventory from all existing nodes
-	allFiles, err := nw.getAllFiles()
+	// Get the successor of the node to remove
+	succNode := nw.Ring.GetSuccessorNode(nodeToRemove)
+
+	// get gRPC client for the node to remove
+	client, err := nw.getClientForNode(nodeToRemove)
 	if err != nil {
 		return &pb.RemoveNodeResponse{
 			MigratedFileCount: 0,
-		}, fmt.Errorf("failed to get file inventory: %v", err)
+		}, fmt.Errorf("failed to get gRPC client for node %v: %v", nodeToRemove, err)
 	}
 
-	// Build list of all file keys for migration analysis
-	var allFileKeys []string
-	fileToCurrentNode := make(map[string]string) // maps a file's key i.e. "videoId/filename" to the current node it exists in
-
-	for nodeAddr, files := range allFiles {
-		for _, file := range files {
-			fileKey := fmt.Sprintf("%s/%s", file.VideoId, file.Filename)
-			allFileKeys = append(allFileKeys,
-				fileKey)
-			fileToCurrentNode[fileKey] = nodeAddr
-		}
+	// Get all files on node to remove
+	files, err := client.ListAllFiles(ctx, &pb.ListAllFilesRequest{})
+	if err != nil {
+		return &pb.RemoveNodeResponse{
+			MigratedFileCount: 0,
+		}, fmt.Errorf("failed to list files on %v: %v", succNode, err)
 	}
 
-	// Determine which files should migrate to the new node
-	filesToMigrate := nw.Ring.GetFilesToMigrateOnRemove(nodeToRemove, allFileKeys)
+	filesToMigrate := make([]string, 0)
+
+	for _, f := range files.Files {
+		fileKey := fmt.Sprintf("%s/%s", f.VideoId, f.Filename)
+		filesToMigrate = append(filesToMigrate, fileKey)
+	}
 
 	log.Printf("files to migrate on remove: %v", filesToMigrate)
 
@@ -283,7 +275,7 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 		}, fmt.Errorf("failed to remove node %v from ring", nodeToRemove)
 	}
 
-	for fileKey, targetNode := range filesToMigrate {
+	for _, fileKey := range filesToMigrate {
 		// Parse the file key back to videoId and filename
 		parts := strings.SplitN(fileKey, "/", 2)
 		if len(parts) != 2 {
@@ -295,7 +287,7 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 		filename := parts[1]
 
 		// Migrate the file
-		if err := nw.moveFile(nodeToRemove, targetNode, videoId, filename); err != nil {
+		if err := nw.moveFile(nodeToRemove, succNode, videoId, filename); err != nil {
 			migrationErrors = append(migrationErrors, fmt.Sprintf("failed to migrate %s: %v", fileKey, err))
 			continue
 		}
@@ -354,8 +346,6 @@ func (nw *NetworkVideoContentService) Close() error {
 	}
 
 	// Close all storage server connections
-	nw.Mu.Lock()
-	defer nw.Mu.Unlock()
 
 	for nodeAddr, conn := range nw.Conns {
 		if err := conn.Close(); err != nil {
@@ -371,6 +361,7 @@ func (nw *NetworkVideoContentService) Close() error {
 }
 
 func (nw *NetworkVideoContentService) Read(videoId string, filename string) ([]byte, error) {
+	log.Printf("nodes in ring: %+v", nw.Ring.Nodes)
 	hashKey := fmt.Sprintf("%s/%s", videoId, filename)
 
 	targetNode := nw.Ring.GetNodeFromKey(hashKey)
@@ -429,35 +420,6 @@ func (nw *NetworkVideoContentService) Write(videoId string, filename string, dat
 		return fmt.Errorf("storage server error: %s", resp.Error)
 	}
 	return nil
-}
-
-func (nw *NetworkVideoContentService) getAllFiles() (map[string][]*pb.FileInfo, error) {
-	allFiles := make(map[string][]*pb.FileInfo)
-	nodes := nw.Ring.GetNodesInRing()
-	for _, nodeAddr := range nodes {
-		client, err := nw.getClientForNode(nodeAddr)
-		if err != nil {
-			log.Printf("Warning: Failed to get client for node %s during file listing: %v", nodeAddr, err)
-			continue
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		resp, err := client.ListAllFiles(ctx, &pb.ListAllFilesRequest{})
-		cancel()
-
-		if err != nil {
-			log.Printf("Warning: Failed to list files from node %s: %v", nodeAddr, err)
-			continue
-		}
-
-		if resp.Error != "" {
-			log.Printf("Warning: Error listing files from node %s: %s", nodeAddr, resp.Error)
-			continue
-		}
-
-		allFiles[nodeAddr] = resp.Files
-	}
-	return allFiles, nil
 }
 
 // Helper method to migrate a file from one node to another

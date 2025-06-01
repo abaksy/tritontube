@@ -62,7 +62,7 @@ func printUsageAndExit() {
 }
 
 func addNode(client proto.VideoContentAdminServiceClient, nodeAddr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	response, err := client.AddNode(ctx, &proto.AddNodeRequest{
@@ -77,7 +77,7 @@ func addNode(client proto.VideoContentAdminServiceClient, nodeAddr string) {
 }
 
 func removeNode(client proto.VideoContentAdminServiceClient, nodeAddr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	response, err := client.RemoveNode(ctx, &proto.RemoveNodeRequest{
@@ -92,7 +92,7 @@ func removeNode(client proto.VideoContentAdminServiceClient, nodeAddr string) {
 }
 
 func listNodes(client proto.VideoContentAdminServiceClient) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	response, err := client.ListNodes(ctx, &proto.ListNodesRequest{})
