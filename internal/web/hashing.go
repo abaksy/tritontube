@@ -83,9 +83,7 @@ func (ring *ConsistentHashRing) GetNodeFromKey(key string) string {
 	})
 
 	// If no node found (keyHash > all node hashes), wrap around to first node
-	if idx == len(ring.Nodes) {
-		idx = 0
-	}
+	idx = idx % len(ring.Nodes)
 
 	return ring.Nodes[idx].Address
 }
@@ -138,7 +136,7 @@ func (ring *ConsistentHashRing) DeleteNodeFromRing(node string) bool {
 		}
 	}
 	// remove element at index `idx`
-	if idx != -1 {
+	if found && idx != -1 {
 		ring.Nodes = append(ring.Nodes[:idx], ring.Nodes[idx+1:]...)
 	}
 	return found

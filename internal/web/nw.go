@@ -109,6 +109,7 @@ func (nw *NetworkVideoContentService) ListNodes(ctx context.Context, req *pb.Lis
 	}, nil
 }
 
+// Add a new node to the ring and split the files of the successor node between it and the newly added node
 func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 
 	newNodeAddr := req.NodeAddress
@@ -135,7 +136,6 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 
 	// Add the node to the ring (this changes the consistent hashing)
 	nw.Ring.AddNodeToRing(newNodeAddr)
-	// newNodeHash := hashStringToUint64(newNodeAddr)
 
 	log.Printf("initiating migration process")
 
@@ -209,13 +209,9 @@ func (nw *NetworkVideoContentService) AddNode(ctx context.Context, req *pb.AddNo
 	}, nil
 }
 
+// Remove the node at the specified address and transfer all of its files to its successor in the ring
 func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.RemoveNodeRequest) (*pb.RemoveNodeResponse, error) {
-	// nw.Mu.Lock()
-	// defer nw.Mu.Unlock()
-
 	nodeToRemove := req.NodeAddress
-
-	log.Printf("node to remove: %v", nodeToRemove)
 
 	currNodes := nw.Ring.GetNodesInRing()
 	nodeExists := false
@@ -262,8 +258,6 @@ func (nw *NetworkVideoContentService) RemoveNode(ctx context.Context, req *pb.Re
 		fileKey := fmt.Sprintf("%s/%s", f.VideoId, f.Filename)
 		filesToMigrate = append(filesToMigrate, fileKey)
 	}
-
-	log.Printf("files to migrate on remove: %v", filesToMigrate)
 
 	// Perform the actual file migrations
 	migratedCount := 0
@@ -361,12 +355,11 @@ func (nw *NetworkVideoContentService) Close() error {
 }
 
 func (nw *NetworkVideoContentService) Read(videoId string, filename string) ([]byte, error) {
-	log.Printf("nodes in ring: %+v", nw.Ring.Nodes)
-	hashKey := fmt.Sprintf("%s/%s", videoId, filename)
+	fileKey := fmt.Sprintf("%s/%s", videoId, filename)
 
-	targetNode := nw.Ring.GetNodeFromKey(hashKey)
+	targetNode := nw.Ring.GetNodeFromKey(fileKey)
 	if targetNode == "" {
-		return nil, fmt.Errorf("failed to get storage node for key %v", hashKey)
+		return nil, fmt.Errorf("failed to get storage node for key %v", fileKey)
 	}
 
 	client, err := nw.getClientForNode(targetNode)
@@ -392,11 +385,11 @@ func (nw *NetworkVideoContentService) Read(videoId string, filename string) ([]b
 }
 
 func (nw *NetworkVideoContentService) Write(videoId string, filename string, data []byte) error {
-	hashKey := fmt.Sprintf("%s/%s", videoId, filename)
+	fileKey := fmt.Sprintf("%s/%s", videoId, filename)
 
-	targetNode := nw.Ring.GetNodeFromKey(hashKey)
+	targetNode := nw.Ring.GetNodeFromKey(fileKey)
 	if targetNode == "" {
-		return fmt.Errorf("failed to get storage node for key %v", hashKey)
+		return fmt.Errorf("failed to get storage node for key %v", fileKey)
 	}
 
 	client, err := nw.getClientForNode(targetNode)
