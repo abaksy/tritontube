@@ -41,15 +41,6 @@ func NewEtcdVideoMetadataService(endpoints string) (*EtcdVideoMetadataService, e
 	}, nil
 }
 
-/*
-type VideoMetadataService interface {
-	Read(id string) (*VideoMetadata, error)
-	List() ([]VideoMetadata, error)
-	Create(videoId string, uploadedAt time.Time) error
-	Close() error
-}
-*/
-
 func (vms *EtcdVideoMetadataService) Read(id string) (*VideoMetadata, error) {
 	var metadata VideoMetadata
 	ctx, close := context.WithTimeout(context.Background(), 5*time.Second)
@@ -155,25 +146,3 @@ func (vms *EtcdVideoMetadataService) Close() error {
 	}
 	return nil
 }
-
-// func main() {
-// 	endpoints := "54.187.69.76:2379,35.89.151.238:2379,44.249.34.21:2379"
-// 	vms, err := NewEtcdVideoMetadataService(endpoints)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// err = vms.Create("donald-duck", time.Now())
-// 	// if err != nil {
-// 	// 	panic(err)
-// 	// }
-
-// 	data, err := vms.Read("donald-duck")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	fmt.Printf("data: %+v\n", data)
-
-// 	vms.Close()
-// }
