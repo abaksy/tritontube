@@ -65,7 +65,11 @@ func main() {
 		if err != nil {
 			log.Panicf("failed to instantiate SQLite VideoMetadataService: %v", err)
 		}
-		defer metadataService.Close()
+	case "etcd":
+		metadataService, err = web.NewEtcdVideoMetadataService(metadataServiceOptions) // comma-separated list of ETCD cluster endpoints
+		if err != nil {
+			log.Panicf("failed to instantiate etcdVideoMetadataService: %v", err)
+		}
 	default:
 		log.Panicf("metadata service type %v is not implemented yet", contentServiceType)
 	}
@@ -101,4 +105,6 @@ func main() {
 		fmt.Println("Error starting server:", err)
 		return
 	}
+
+	defer metadataService.Close()
 }

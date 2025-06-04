@@ -4,7 +4,7 @@ import "time"
 
 type VideoMetadata struct {
 	Id         string
-	UploadedAt time.Time
+	UploadedAt time.Time `json:"uploaded_at"`
 }
 
 type VideoMetadataService interface {
