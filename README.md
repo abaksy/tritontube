@@ -1,1 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/e5W8wwsN)
+# TritonTube - A distributed, fault-tolerant video streaming application 
+
+This is a simple YouTube clone that uses MPEG-DASH to stream MP4 videos, can be configured to use a distributed consistent hash ring of nodes for content storage, and [etcd](https://etcd.io) for metadata storage. 
